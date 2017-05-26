@@ -6,6 +6,17 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 
+/* The examples use simple WiFi configuration that you can set via
+   'make menuconfig'.
+
+   If you'd rather not, just change the below entries to strings with
+   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
+*/
+#define WIFI_SSID CONFIG_WIFI_SSID
+#define WIFI_PASS CONFIG_WIFI_PASSWORD
+
+static const char *TAG = "example";
+
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     switch(event->event_id) 
@@ -44,8 +55,8 @@ void app_main(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     wifi_config_t sta_config = {
         .sta = {
-            .ssid = "G0sitaare",
-            .password = "thinkdifferent1!",
+            .ssid = WIFI_SSID,
+            .password = WIFI_PASS,
             .bssid_set = false
         }
     };
