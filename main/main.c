@@ -8,6 +8,28 @@
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
+    switch(event->event_id) 
+    {
+        case SYSTEM_EVENT_STA_START:
+            printf("SYSTEM_EVENT_STA_START\n");
+            esp_wifi_connect();
+            break;
+
+        case SYSTEM_EVENT_STA_GOT_IP:
+            printf("SYSTEM_EVENT_STA_GOT_IP\n");
+            break;
+
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+            /* This is a workaround as ESP32 WiFi libs don't currently
+                auto-reassociate. */
+            printf("SYSTEM_EVENT_STA_DISCONNECTED\n");
+            esp_wifi_connect();
+            break;
+
+        default:
+            break;
+    }
+
     return ESP_OK;
 }
 
@@ -22,14 +44,14 @@ void app_main(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     wifi_config_t sta_config = {
         .sta = {
-            .ssid = "Hong_quan",
-            .password = "khongcocho",
+            .ssid = "G0sitaare",
+            .password = "thinkdifferent1!",
             .bssid_set = false
         }
     };
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
-    ESP_ERROR_CHECK( esp_wifi_connect() );
+    // ESP_ERROR_CHECK( esp_wifi_connect() );
 
     gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
     int level = 0;
