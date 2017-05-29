@@ -6,6 +6,9 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 
+#include "event_center.h"
+#include "mqttclient_mq135.h"
+
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
 
@@ -15,7 +18,7 @@
 #define WIFI_SSID CONFIG_WIFI_SSID
 #define WIFI_PASS CONFIG_WIFI_PASSWORD
 
-static const char *TAG = "example";
+//static const char *TAG = "example";
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -27,6 +30,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
             break;
 
         case SYSTEM_EVENT_STA_GOT_IP:
+            xEventGroupSetBits(EC_EventGroup, EC_EVENT_GOT_IP_BIT);
             printf("SYSTEM_EVENT_STA_GOT_IP\n");
             break;
 
@@ -64,6 +68,7 @@ void app_main(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
     // ESP_ERROR_CHECK( esp_wifi_connect() );
 
+    /*
     gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
     int level = 0;
     while (true) {
@@ -71,5 +76,12 @@ void app_main(void)
         level = !level;
         vTaskDelay(300 / portTICK_PERIOD_MS);
     }
+    */
+
+    event_center_init();
+    
+    xTaskCreate(&mqttclient_mq135_task, "mqttclientmq135", 2048, NULL, 5, NULL);
+
+    //while(1);
 }
 
