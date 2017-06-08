@@ -12,9 +12,9 @@ typedef struct network_t
   struct addrinfo *addri;
   int socket;
   
-  int (*connect)(struct network_t *net);
-  int (*read)(struct network_t *net, unsigned char *buf, int bufLen);
-  int (*write)(struct network_t *net, unsigned char *buf, int bufLen);
+  int (*nconnect)(struct network_t *net);
+  int (*nread)(struct network_t *net, unsigned char *buf, int bufLen);
+  int (*nwrite)(struct network_t *net, unsigned char *buf, int bufLen);
 }network_t;
 
 int Network_Init(network_t *net, char *hostString, int port);
