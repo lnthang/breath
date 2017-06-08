@@ -13,8 +13,9 @@
 #include "MQTTPacket.h"
 #include "network.h"
 
-#define MQTT_SERVER "iot.eclipse.org"
-#define MQTT_SERVER_IP "192.168.1.104"
+// #define MQTT_SERVER "iot.eclipse.org"
+#define MQTT_SERVER "localhost"
+#define MQTT_SERVER_IP "192.168.1.110"
 #define MQTT_PORT 1883
 #define MQTT_PORT_STRING "1883"
 
@@ -40,16 +41,16 @@ void mqttclient_mq135_task(void *vparams)
 
   // uint32_t len = 0;
   // // int rc = 0;
-  // unsigned char buf[200];
-  // char* payload = "My Testing Payload - TLE";
-  // MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-  // MQTTString topicString = MQTTString_initializer;
+  unsigned char buf[200];
+  char* payload = "My Testing Payload - TLE";
+  MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+  MQTTString topicString = MQTTString_initializer;
   
   // int sock;
   // int rc = 0;
   
-  // int payloadlen = strlen(payload);
-  // int buflen = sizeof(buf);
+  int payloadlen = strlen(payload);
+  int buflen = sizeof(buf);
   // // int r;
   
   xEventGroupWaitBits(EC_EventGroup, EC_EVENT_GOT_IP_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
@@ -75,13 +76,19 @@ void mqttclient_mq135_task(void *vparams)
 
   // printf("Device is connected\n");
 
-  // data.clientID.cstring = "me";
-  // data.keepAliveInterval = 15;
-  // data.cleansession = 1;
-  // len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
-  // topicString.cstring = "topic";
+  network_t test_network;
 
-  // // len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
+  Network_Init(&test_network, MQTT_SERVER_IP, MQTT_PORT);
+
+  data.clientID.cstring = "me";
+  data.keepAliveInterval = 15;
+  data.cleansession = 1;
+  topicString.cstring = "topic";
+
+  int len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
+
+
+  // len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
 
   // rc = write(sock, buf, len);
   // if (rc == -1)
@@ -91,12 +98,13 @@ void mqttclient_mq135_task(void *vparams)
 
   // len = 0;
 
-  // // len = MQTTSerialize_publish(buf + len, buflen - len, 0, 0, 0, 0, topicString, (unsigned char *) payload, payloadlen); /* 2 */
+  len += MQTTSerialize_publish(buf + len, buflen - len, 0, 0, 0, 0, topicString, (unsigned char *) payload, payloadlen); /* 2 */
   // len = MQTTSerialize_pingreq(buf + len, buflen - len);
+  len += MQTTSerialize_disconnect(buf + len, buflen - len); /* 3 */
 
-  network_t test_network;
-
-  Network_Init(&test_network, MQTT_SERVER, MQTT_PORT);
+  // test_network.nconnect(&test_network);
+  test_network.nwrite(&test_network, buf, len);
+  
 
   while(1)
   {
