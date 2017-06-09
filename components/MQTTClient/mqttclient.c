@@ -20,30 +20,33 @@ int32_t MQTTClient_Init(struct mqttClient_t *client, char *host, int32_t port)
   char buf[10];
   struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
 
+  /* Find host information for connection */
   itoa(port, buf, sizeof(buf)/sizeof(buf[0]));
   rc = getaddrinfo(host, buf, &hints, &client->addri);
-
   if (rc != 0)
   {
-    printf("Error code: %d\n", rc);
+    /* Something wrong exit with return code */
+    MQTTCLIENT_LOGE("Cannot find host info.\n");
     goto exit;
   }
 
+  /* Create a socket */
   client->sock = socket(client->addri->ai_family, client->addri->ai_socktype, 0);
-
   if (client->sock == -1)
   {
     MQTTCLIENT_LOGE("Failed to create socket\n");
     goto exit;
   }
+  // MQTTCLIENT_LOGI("Socket created with id : %d\n", client->sock);
 
-  MQTTCLIENT_LOGI("Socket created with id : %d\n", client->sock);
-
+  /* Connect to host */
   rc = MQTTClient_Connect(client);
-  
-  struct in_addr *addr;
-  addr = &((struct sockaddr_in *)client->addri->ai_addr)->sin_addr;
-  printf("Address : %x\n", addr->s_addr);
+  if (rc != 0)
+  {
+    MQTTCLIENT_LOGE("Failed to connect to %s.\n", host);
+    goto exit;
+  }
+  MQTTCLIENT_LOGI("Successfully connected to host %s.\n", host);
 
 exit:
   return rc;
@@ -72,7 +75,5 @@ int32_t MQTTClient_Loop(struct mqttClient_t *client)
 
 static int32_t MQTTClient_Connect(mqttClient_t *client)
 {
-  int32_t rc = -1;
-
-  return rc;
+  return connect(client->sock, client->addri->ai_addr, client->addri->ai_addrlen);
 }
