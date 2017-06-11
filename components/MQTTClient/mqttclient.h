@@ -22,7 +22,8 @@ typedef struct mqttClient_t {
 
 // typedef struct mqttClient_t mqttClient_t;
 
-int32_t MQTTClient_Init(struct mqttClient_t *client, char *host, int32_t port);
+int32_t MQTTClient_Init(/*struct mqttClient_t *client, char *host, int32_t port */);
+int32_t MQTTClient_Create(char *host, int32_t port);
 int32_t MQTTClient_Publish(struct mqttClient_t *client, uint8_t *topic, uint8_t *msgBuf, uint32_t msgLen);
 int32_t MQTTClient_Subscribe(struct mqttClient_t *client, uint8_t *topic, mqttClientMsgHandler_t callback);
 int32_t MQTTClient_Loop(struct mqttClient_t *client);
