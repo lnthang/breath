@@ -13,15 +13,19 @@
 #define MQTTCLIENT_LOGW(format, ...)  ESP_LOGW(MQTTCLIENT_TAG, format, ##__VA_ARGS__)
 #define MQTTCLIENT_LOGE(format, ...)  ESP_LOGE(MQTTCLIENT_TAG, format, ##__VA_ARGS__)
 
-#define MAX_SUPPORTED_CLIENT_NUM    5
 
+
+typedef struct mqttClient_t {
+  struct addrinfo *addri;
+  mqttClientMsgHandler_t pHandler[MQTT_MAX_SUB_TOPIC_PER_CLIENT];
+  char *subTopic[MQTT_MAX_SUB_TOPIC_PER_CLIENT];
+  uint8_t numSubTopic;
+
+  int sock;
+}mqttClient_t;
 
 static struct {
-  // struct{
-  //   mqttClient_t client;
-  //   uint8_t isFree;
-  // }clientList[MAX_SUPPORTED_CLIENT_NUM];
-  mqttClient_t client[MAX_SUPPORTED_CLIENT_NUM];
+  mqttClient_t client[MQTT_MAX_CLIENT];
   uint8_t numFreeSlot;
 }clientList;
 
@@ -29,11 +33,11 @@ static struct {
 static int32_t MQTTClient_Connect(mqttClient_t *client);
 static int32_t MQTTClient_ReadSock(void *sock, unsigned char *buf, int32_t len);
 
-int32_t MQTTClient_Init(/*struct mqttClient_t *client, char *host, int32_t port */)
+int32_t MQTTClient_Init(void)
 {
   /* Initial global variable */
-  memset(&clientList.client, 0, sizeof(mqttClient_t) * MAX_SUPPORTED_CLIENT_NUM);
-  clientList.numFreeSlot = MAX_SUPPORTED_CLIENT_NUM; 
+  memset(&clientList.client, 0, sizeof(mqttClient_t) * MQTT_MAX_CLIENT);
+  clientList.numFreeSlot = MQTT_MAX_CLIENT; 
 
 
 #if 0
@@ -80,7 +84,7 @@ int32_t MQTTClient_Create(char *host, int32_t port)
   char buf[10];
   struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
 
-  for (int idx = 0; idx < MAX_SUPPORTED_CLIENT_NUM; idx++)
+  for (int idx = 0; idx < MQTT_MAX_CLIENT; idx++)
   {
     if (clientList.client[idx].addri == NULL)
     {
@@ -91,7 +95,7 @@ int32_t MQTTClient_Create(char *host, int32_t port)
       break;
     }
 
-    if (idx == (MAX_SUPPORTED_CLIENT_NUM - 1))
+    if (idx == (MQTT_MAX_CLIENT - 1))
     {
       /* No available slot then exit with error code */
       MQTTCLIENT_LOGE("Cannot find a free client slot to allocate\n");
@@ -123,7 +127,7 @@ exit:
   return clientIdx;
 }
 
-int32_t MQTTClient_Publish(struct mqttClient_t *client, uint8_t *topic, uint8_t *msgBuf, uint32_t msgLen)
+int32_t MQTTClient_Publish(uint8_t *topic, uint8_t *msgBuf, uint32_t msgLen)
 {
   int32_t rc = -1;
   int32_t len;
@@ -136,14 +140,14 @@ int32_t MQTTClient_Publish(struct mqttClient_t *client, uint8_t *topic, uint8_t 
   return rc;
 }
 
-int32_t MQTTClient_Subscribe(struct mqttClient_t *client, uint8_t *topic, mqttClientMsgHandler_t callback)
+int32_t MQTTClient_Subscribe(uint8_t *topic, mqttClientMsgHandler_t callback)
 {
   int32_t rc = -1;
 
   return rc;
 }
 
-int32_t MQTTClient_Loop(struct mqttClient_t *client)
+int32_t MQTTClient_Loop(void)
 {
   int32_t rc = -1;
 
