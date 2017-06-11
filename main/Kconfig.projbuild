@@ -1,10 +1,13 @@
 menu "Breath Project Configuration"
 
+menu "WIFI Connection Credentials"
+
 config WIFI_SSID
   string "Wifi SSID"
   default "networkSSID"
   help
     SSID (network name) of network to which device connect.
+
 config WIFI_PASSWORD
   string "Wifi Password"
   default "password"
@@ -12,5 +15,6 @@ config WIFI_PASSWORD
     Wifi password (supports WPA or WPA2 only) of network to which device connect.
 
     Can be left empty if the network has no security set.
+endmenu
 
 endmenu
