@@ -1,0 +1,15 @@
+menu "MQTT Client"
+
+config MQTT_MAX_CLIENT
+  int "Maximum number of supported Clients"
+  default 5
+  help
+    Max number of Client concurrently connected to Server
+
+config MQTT_MAX_SUB_TOPIC_PER_CLIENT
+  int "Maximum number of Subscribed Topics per Client"
+  default 5
+  help
+    Max number of SubTopic at a time for each Client
+
+endmenu
