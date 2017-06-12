@@ -26,7 +26,7 @@ typedef struct mqttClient_t {
 
 static struct {
   mqttClient_t client[MQTT_MAX_CLIENT];
-  uint8_t numFreeSlot;
+  // uint8_t numFreeSlot;
 }clientList;
 
 
@@ -37,7 +37,7 @@ int32_t MQTTClient_Init(void)
 {
   /* Initial global variable */
   memset(&clientList.client, 0, sizeof(mqttClient_t) * MQTT_MAX_CLIENT);
-  clientList.numFreeSlot = MQTT_MAX_CLIENT; 
+  // clientList.numFreeSlot = MQTT_MAX_CLIENT;
 
 
 #if 0
@@ -127,20 +127,47 @@ exit:
   return clientIdx;
 }
 
-int32_t MQTTClient_Publish(uint8_t *topic, uint8_t *msgBuf, uint32_t msgLen)
+int32_t MQTTClient_Release(int32_t clientIdx)
+{
+  int32_t rc = -1;
+
+  if (clientIdx >= MQTT_MAX_CLIENT)
+  {
+    goto exit;
+  }
+
+  memset(&clientList.client[clientIdx], 0, sizeof(mqttClient_t));
+
+exit:
+  return rc;
+}
+
+int32_t MQTTClient_Publish(uint8_t clientId, char *topic, char *msgBuf, uint32_t msgLen)
 {
   int32_t rc = -1;
   int32_t len;
   uint8_t buf[200];
+  MQTTString topicString = MQTTString_initializer;
 
-  // len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
+  topicString.cstring = topic;
 
+  len = MQTTSerialize_publish(buf, sizeof(buf), 0, 0, 0, 0, topicString, (unsigned char *) msgBuf, msgLen);
 
+  rc = write(clientList.client[clientId].sock, buf, len);
 
+  if (rc == -1)
+  {
+    MQTTCLIENT_LOGE("Write socket failed, return code %d\n", rc);
+    goto exit;
+  }
+
+  MQTTCLIENT_LOGI("Successfully Publish a message\n");
+
+exit:
   return rc;
 }
 
-int32_t MQTTClient_Subscribe(uint8_t *topic, mqttClientMsgHandler_t callback)
+int32_t MQTTClient_Subscribe(uint8_t clientId, char *topic, mqttClientMsgHandler_t callback)
 {
   int32_t rc = -1;
 
