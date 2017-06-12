@@ -11,7 +11,7 @@
 #include "mqttclient_mq135.h"
 #include "event_center.h"
 #include "MQTTPacket.h"
-#include "network.h"
+#include "mqttClient.h"
 
 // #define MQTT_SERVER "iot.eclipse.org"
 #define MQTT_SERVER "localhost"
@@ -76,16 +76,20 @@ void mqttclient_mq135_task(void *vparams)
 
   // printf("Device is connected\n");
 
-  network_t test_network;
+  // mqttClient_t testClient;
 
-  Network_Init(&test_network, MQTT_SERVER_IP, MQTT_PORT);
+  MQTTClient_Init(/*&testClient, MQTT_SERVER_IP, MQTT_PORT*/);
 
-  data.clientID.cstring = "me";
-  data.keepAliveInterval = 15;
-  data.cleansession = 1;
-  topicString.cstring = "topic";
+  int32_t clientIdx = MQTTClient_Create(MQTT_SERVER_IP, MQTT_PORT);
 
-  int len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
+  printf("Client idx %d\n", clientIdx);
+
+  // data.clientID.cstring = "me";
+  // data.keepAliveInterval = 15;
+  // data.cleansession = 1;
+  // topicString.cstring = "topic";
+
+  // int len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
 
 
   // len = MQTTSerialize_connect(buf, buflen, &data); /* 1 */
@@ -98,18 +102,23 @@ void mqttclient_mq135_task(void *vparams)
 
   // len = 0;
 
-  len += MQTTSerialize_publish(buf + len, buflen - len, 0, 0, 0, 0, topicString, (unsigned char *) payload, payloadlen); /* 2 */
+  // len += MQTTSerialize_publish(buf + len, buflen - len, 0, 0, 0, 0, topicString, (unsigned char *) payload, payloadlen); /* 2 */
   // len = MQTTSerialize_pingreq(buf + len, buflen - len);
-  len += MQTTSerialize_disconnect(buf + len, buflen - len); /* 3 */
+  // len += MQTTSerialize_disconnect(buf + len, buflen - len); /* 3 */
 
   // test_network.nconnect(&test_network);
-  test_network.nwrite(&test_network, buf, len);
+  // test_network.nwrite(&test_network, buf, len);
   
+  char msg[32];
+  int cnt = 0;
 
   while(1)
   {
-    vTaskDelay(10000/portTICK_PERIOD_MS);
+    vTaskDelay(5000/portTICK_PERIOD_MS);
     printf("In mqttclient_mq135_task\n");
+
+    sprintf(msg, "Hello #%d\n", cnt++);
+    MQTTClient_Publish(clientIdx, "test", msg, strlen(msg));
     
     // data.clientID.cstring = "me";
     // data.keepAliveInterval = 60;
