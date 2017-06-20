@@ -7,7 +7,8 @@
 #include "driver/gpio.h"
 
 #include "event_center.h"
-#include "mqttclient_mq135.h"
+#include "SampleTask.h"
+// #include "mqttclient_mq135.h"
 
 /* The examples use simple WiFi configuration that you can set via
    'make menuconfig'.
@@ -80,7 +81,7 @@ void app_main(void)
 
     event_center_init();
     
-    xTaskCreate(&mqttclient_mq135_task, "publish", 2048, NULL, 5, NULL);
+    xTaskCreate(&mqtt_task, "publish", 2048, NULL, 5, NULL);
     // xTaskCreate(&mqttclient_mq135_sub_task, "subscribe", 2048, NULL, 5, NULL);
     
 
