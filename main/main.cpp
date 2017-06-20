@@ -1,13 +1,3 @@
-// #include "freertos/FreeRTOS.h"
-// #include "esp_wifi.h"
-// #include "esp_system.h"
-// #include "esp_event.h"
-// #include "esp_event_loop.h"
-// #include "nvs_flash.h"
-// #include "driver/gpio.h"
-// #include "driver/adc.h"
-// // #include "DHT/DHT.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,7 +30,6 @@ DHT_Unified dht2(DHTPIN2, DHTTYPE);
 const char *SENSORTAG = "SENSORS";
 
 static float t,h,rawADC,estPPM;
-
 static void readSensor(float *t, float *h, float *rawADC, float *estPPM)
 {
 	// Get temperature event and print its value.
@@ -79,6 +68,6 @@ void adc1task(void* arg)
 extern "C" void app_main()
 {
 	dht2.begin();
-	xTaskCreate(adc1task, "adc1task", 1024*3, NULL, 0, NULL);
+	xTaskCreate(adc1task, "adc1task", 1024*3, NULL, 10, NULL);
 }
 
