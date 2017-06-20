@@ -6,3 +6,9 @@
 # in the build directory. This behaviour is entirely configurable,
 # please read the ESP-IDF documents if you need to do this.
 #
+
+COMPONENT_ADD_LDFLAGS=-lstdc++ -l$(COMPONENT_NAME)
+
+COMPONENT_SRCDIRS := . sensors/
+
+COMPONENT_ADD_INCLUDEDIRS := sensors/include/
