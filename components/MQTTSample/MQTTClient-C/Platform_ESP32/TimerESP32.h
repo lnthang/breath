@@ -1,9 +1,11 @@
 #ifndef __TIMER_ESP32_H__
 #define __TIMER_ESP32_H__
 
+#include "freertos/FreeRTOS.h"
+
 typedef struct Timer
 {
-  int endTime;
+  portTickType endTime;
 } Timer;
 
 void TimerInit(Timer*);
