@@ -443,14 +443,14 @@ void NetworkInit(Network* n)
 int NetworkConnect(Network* n, char* addr, int port) {
     char portbuf[100];
     int ret, flags;
-	int retVal = -1;
-	int len;
+    int retVal = -1;
+    int len;
 
     mbedtls_ssl_init(&n->ssl);
     mbedtls_x509_crt_init(&n->cacert);
     mbedtls_ctr_drbg_init(&n->ctr_drbg);
     ESP_LOGD(TAG, "Seeding the random number generator");
-	n->init=1;
+    n->init=1;
 
     mbedtls_ssl_config_init(&n->conf);
 

@@ -81,7 +81,7 @@ void app_main(void)
 
     event_center_init();
     
-    xTaskCreate(&mqtt_task, "publish", 2048, NULL, 5, NULL);
+    xTaskCreate(&mqtt_task, "publish", 16384, NULL, 5, NULL);
     // xTaskCreate(&mqttclient_mq135_sub_task, "subscribe", 2048, NULL, 5, NULL);
     
 

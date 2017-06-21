@@ -34,10 +34,13 @@
 #endif
 
 //#include "MQTTopenssl.h"
-#include "MQTTmbedtls.h"
+// #include "MQTTmbedtls.h"
 //#include "MQTTLinux.h"
 #include "MQTTPacket.h"
 #include "stdio.h"
+
+#include "NetworkESP32.h"
+#include "TimerESP32.h"
 
 #if defined(MQTTCLIENT_PLATFORM_HEADER)
 /* The following sequence of macros converts the MQTTCLIENT_PLATFORM_HEADER value
