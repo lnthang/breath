@@ -14,6 +14,7 @@ written by Adafruit Industries
 #include "esp_system.h"
 #include <time.h>
 #include <rom/ets_sys.h>
+#include <cstdlib>
 
 #define MIN_INTERVAL 2000
 #define LOW  0
@@ -100,6 +101,42 @@ float DHT::readHumidity(bool force) {
   }
   return f;
 }
+
+float DHT::computeDewPointInCelcius(float temperature, float percentHumidity) 
+{
+  //https://cals.arizona.edu/azmet/dewpoint.html
+  // B = (ln(RH / 100) + ((17.27 * T) / (237.3 + T))) / 17.27
+  // D = (237.3 * B) / (1 - B)
+  float B = (log(percentHumidity / 100.0) + ((17.27 * temperature) / (237.3 + temperature))) / 17.27;
+  float D = (237.3 * B) / (1 - B);
+
+  return D;
+}
+
+heatIndexClassification_t DHT::heatIndexClassification(float temperature, bool isFahrenheit)
+{
+  // https://www.weather.gov/ama/heatindex
+  int i = 0;
+  const float *p_HIC;
+  if (isFahrenheit)
+  {
+    p_HIC = &heatIndexClassificationInF[0];
+  }
+  else
+  {
+    p_HIC = &heatIndexClassificationInC[0];
+  }
+
+  for (i = 0; i < (int)_TOO_DANGEROUS; i++)
+  {
+    if (temperature <= p_HIC[i+1] && (temperature > p_HIC[i]))
+    {
+      return (heatIndexClassification_t)i;
+    }
+  }
+  return (heatIndexClassification_t)i;
+}
+
 
 //boolean isFahrenheit: True == Fahrenheit; False == Celcius
 float DHT::computeHeatIndex(float temperature, float percentHumidity, bool isFahrenheit) {
@@ -250,7 +287,7 @@ bool DHT::read(bool force) {
   }
 
   // DEBUG_PRINTLN(F("Received:"));
-  printf("Received:\n");
+  // printf("Received:\n");
   DEBUG_PRINT(data[0], HEX); DEBUG_PRINT(F(", "));
   DEBUG_PRINT(data[1], HEX); DEBUG_PRINT(F(", "));
   DEBUG_PRINT(data[2], HEX); DEBUG_PRINT(F(", "));
@@ -295,7 +332,6 @@ uint32_t DHT::expectPulse(bool level) {
     
 //    while (digitalRead(_pin) == level) {
     while (gpio_get_level((gpio_num_t)_pin) == level) {
-      // printf("xxxxxxx %d\n", count);
       if (count++ >= _maxcycles) {
         return 0; // Exceeded timeout, fail.
       }

@@ -51,50 +51,95 @@ MQ135 gasSensorMQ135_0 = MQ135(ADC1_CHANNEL_0);
 
 // See guide for details on sensor wiring and usage:
 //   https://learn.adafruit.com/dht/overview
-DHT_Unified dht2(DHTPIN2, DHTTYPE);
+DHT dht2(DHTPIN2, DHTTYPE);
 
 const char *SENSORTAG = "SENSORS";
 
-static float t,h,rawADC,estPPM, estPPM_with_temp_hum;
-static void readSensor(float *t, float *h, float *rawADC, float *estPPM, float *estPPM_with_temp_hum)
+typedef struct DHT_data_t
 {
-	// Get temperature event and print its value.
-		sensors_event_t event;  
-		dht2.temperature().getEvent(&event);
+	float temperature;
+	float humidity;
+	float dewPoint;
+	float heatIndex;
+	heatIndexClassification_t heatIndexClassification;
+	
+}DHT_Data;
 
-		if (!isnan(event.temperature)) 
+void printDHT(DHT_Data data)
+{
+	printf("-- DHT %f %f %f %f %d\n", data.temperature, data.humidity, data.heatIndex, data.dewPoint, (int) data.heatIndexClassification);
+}
+
+typedef struct MQ135_data_t
+{
+	float rawADC;
+	float estPPM;
+	float estPPM_with_temp_hum;
+	
+}MQ135_Data;
+
+void printMQ135(MQ135_Data data)
+{
+	printf("-- MQ135 %f %f %f\n", data.rawADC, data.estPPM, data.estPPM_with_temp_hum);
+}
+
+DHT_Data DHT_data;
+MQ135_Data MQ135_data;
+
+
+static bool readSensor(DHT_data_t* DHT_data, MQ135_data_t* MQ135_data)
+{
+		// float t, float h, float rawADC, float estPPM, float estPPM_with_temp_hum;
+
+		// Get temperature 
+		DHT_data->temperature = dht2.readTemperature();
+
+		if (isnan(DHT_data->temperature))
 		{
-			*t = event.temperature;
+			DHT_data->temperature = -1.0f;
 		}
 
-		// Get humidity event and print its value.
-		dht2.humidity().getEvent(&event);
-		if (!isnan(event.relative_humidity)) 
+		// Get humidity 
+		DHT_data->humidity = dht2.readHumidity();
+		if (isnan(DHT_data->humidity))
 		{
-			*h = event.relative_humidity;
+			DHT_data->humidity = -1.0f;
 		}
 
-		*rawADC = gasSensorMQ135_0.getRawADC();
-		*estPPM = gasSensorMQ135_0.getPPM();
-		*estPPM_with_temp_hum = 0;
-		if (*t > 0.0f && *h > 0.0f)
-			*estPPM_with_temp_hum = gasSensorMQ135_0.getCorrectedPPM(*t, *h);
+		MQ135_data->rawADC = gasSensorMQ135_0.getRawADC();
+		MQ135_data->estPPM = gasSensorMQ135_0.getPPM();
+		MQ135_data->estPPM_with_temp_hum = 0;
 
+		if (DHT_data->temperature > 0.0f 
+			&& DHT_data->temperature < 55.0f 
+			&& DHT_data->humidity > 0.0f)
+		{
+			MQ135_data->estPPM_with_temp_hum = gasSensorMQ135_0.getCorrectedPPM(DHT_data->temperature, DHT_data->humidity);
+			DHT_data->dewPoint  = dht2.computeDewPointInCelcius(DHT_data->temperature, DHT_data->humidity);
+			DHT_data->heatIndex = dht2.computeHeatIndex(DHT_data->temperature,  DHT_data->humidity, false);
+			DHT_data->heatIndexClassification = dht2.heatIndexClassification(DHT_data->heatIndex, false);
+			return true;
+		}
+	return false;
 
 		// printf("The adc1 value: %f %f %f %f %d \n", *t, *h, *rawADC, *estPPM, (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC));
 }
 
 void adc1task(void* arg)
 {
-    while(1)
+	bool isReadSensorOk;
+	isReadSensorOk = false;
+    while (!isReadSensorOk)
     {
-    	t = -1;
-    	h = -1;
-		readSensor(&t, &h, &rawADC, &estPPM, &estPPM_with_temp_hum);
+    	// DHT_data.temperature = -1;
+    	// DHT_data.humidity = -1;
+		readSensor(&DHT_data, &MQ135_data);
 
-		printf("The adc1 value: %f %f %f %f %f %d \n", t, h, rawADC, estPPM, estPPM_with_temp_hum, (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC));
+		printDHT(DHT_data);
+		printMQ135(MQ135_data);
+		// printf("The adc1 value: %f %f %f %f %f %d \n", t, h, rawADC, estPPM, estPPM_with_temp_hum, (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC));
 
-        vTaskDelay(2000/portTICK_PERIOD_MS);
+        vTaskDelay(1000/portTICK_PERIOD_MS);
     }
     vTaskDelete(NULL);
 }
@@ -121,7 +166,7 @@ const int CONNECTED_BIT = BIT0;
 
 #define WEB_DELETE "https://api.thingspeak.com/channels/290009/feeds"
 
-static const char *TAG = "example";
+static const char *TAG = "WIFI_HTTPS";
 
 /* Root cert for howsmyssl.com, found in cert.c */
 extern const char *server_root_cert;
@@ -304,20 +349,32 @@ static void https_get_task(void *pvParameters) {
         ESP_LOGI(TAG, "Writing HTTP request...");
 
 
-    	
-
-    	t = -1.0f;
-		h = -1.0f;
-		while ( t <= 0.0f || h <= 0.0f )
+		bool isReadSensorOk; isReadSensorOk = false;
+		int count; count = 0;
+		while (!isReadSensorOk && count < 100)
 		{
-			readSensor(&t, &h, &rawADC, &estPPM, &estPPM_with_temp_hum);
+			isReadSensorOk = readSensor(&DHT_data, &MQ135_data);
+			vTaskDelay(100 / portTICK_RATE_MS);
+			count++;
 		}
 
-    	printf("The adc1 value: %f %f %f %f %f %d \n", t, h, rawADC, estPPM, estPPM_with_temp_hum, (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC));     
+		printDHT(DHT_data);
+		printMQ135(MQ135_data);
 
+    	// printf("The adc1 value: %f %f %f %f %f %d \n", t, h, rawADC, estPPM, estPPM_with_temp_hum, (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC));     
+		
+
+		if (isReadSensorOk)
+		{	
 			char reqbuf[512];
 
-			sprintf(reqbuf,"GET %s&field1=%f&field2=%f&field3=%f&field4=%f&field5=%f HTTP/1.1\nHost: %s\nUser-Agent: esp-idf/1.0 esp32\n\n",WEB_URL, t, h, rawADC, estPPM, estPPM_with_temp_hum, WEB_SERVER);
+			sprintf(reqbuf,"GET %s&field1=%f&field2=%f&field3=%f&field4=%f&field5=%f&field6=%f&field7=%f \
+							HTTP/1.1\n \
+							Host: %s\n \
+							User-Agent: esp-idf/1.0 esp32\n\n",
+								WEB_URL, DHT_data.temperature, DHT_data.humidity, 
+								MQ135_data.rawADC, MQ135_data.estPPM, MQ135_data.estPPM_with_temp_hum, 
+								DHT_data.heatIndex, DHT_data.dewPoint, WEB_SERVER);
 
 			ESP_LOGI(TAG, "req=[%s]",reqbuf);
 
@@ -367,7 +424,7 @@ static void https_get_task(void *pvParameters) {
 					putchar(buf[i]);
 				}
 			} while(1);
-         // }
+        }
         mbedtls_ssl_close_notify(&ssl);
 
     exit:
@@ -385,7 +442,7 @@ static void https_get_task(void *pvParameters) {
         ESP_ERROR_CHECK( esp_wifi_stop() );
         ESP_ERROR_CHECK( esp_wifi_deinit() );
 
-        for(int countdown = 15; countdown >= 0; countdown--) {
+        for(int countdown = 10; countdown >= 0; countdown--) {
         	
         	ESP_LOGI(TAG, "%d...", countdown);
             vTaskDelay(1000 / portTICK_RATE_MS);
@@ -408,6 +465,6 @@ extern "C" void app_main()
     wifi_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
    	
-    xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 10, NULL);
+    xTaskCreate(&https_get_task, "https_get_task", 8192, NULL, 20, NULL);
 }
 

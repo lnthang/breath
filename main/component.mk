@@ -9,6 +9,6 @@
 
 COMPONENT_ADD_LDFLAGS=-lstdc++ -l$(COMPONENT_NAME)
 
-COMPONENT_SRCDIRS := . sensors/
+COMPONENT_SRCDIRS := . sensors
 
 COMPONENT_ADD_INCLUDEDIRS := sensors/include/

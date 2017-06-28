@@ -143,7 +143,7 @@ bool DHT_Unified::Humidity::getEvent(sensors_event_t* event) {
   event->version           = sizeof(sensors_event_t);
   event->sensor_id         = _id;
   event->type              = SENSOR_TYPE_RELATIVE_HUMIDITY;
-    event->timestamp       = (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC);//system_get_time();//millis();
+  event->timestamp         = (uint32_t) (clock() * 1000 / CLOCKS_PER_SEC);//system_get_time();//millis();
   event->relative_humidity = _parent->_dht.readHumidity();
   
   return true;
