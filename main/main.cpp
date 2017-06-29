@@ -162,9 +162,9 @@ const int CONNECTED_BIT = BIT0;
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.thingspeak.com"
 #define WEB_PORT "443"
-#define WEB_URL "https://api.thingspeak.com/update?api_key=GFW6TKN1F0G39LAO"
+#define WEB_URL "https://api.thingspeak.com/update?api_key=FG8XS7Q868L4MCYG"//GFW6TKN1F0G39LAO"//FG8XS7Q868L4MCYG
 
-#define WEB_DELETE "https://api.thingspeak.com/channels/290009/feeds"
+#define WEB_DELETE "https://api.thingspeak.com/channels/290009/feeds" //294713
 
 static const char *TAG = "WIFI_HTTPS";
 
@@ -204,8 +204,10 @@ static void initialise_wifi(void)
     wifi_config_t wifi_config = 
     {
         .sta = {
-            "Ngoc Duc",
-            "08111989",
+        	// "Ngoc Duc",
+        	// "08111989",
+            "Hong_quan",
+            "khongcocho",
 			false
         },
     };
