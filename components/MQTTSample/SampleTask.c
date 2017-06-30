@@ -25,8 +25,8 @@
 
 /* Constants that aren't configurable in menuconfig */
 // #define MQTT_SERVER "mqtt.thingspeak.com"
-#define MQTT_SERVER       "192.168.1.110"
-// #define MQTT_PORT 443
+#define MQTT_SERVER       "192.168.10.158"
+#define MQTT_SECURE_PORT  443
 #define MQTT_PORT         1883
 #define MQTT_BUF_SIZE     1000
 #define MQTT_WEBSOCKET    1  // 0=no 1=yes
@@ -35,6 +35,9 @@ static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
 static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
 static const char *TAG = "MQTASK";
+
+extern const uint8_t server_root_cert_pem_start[] asm("_binary_server_cert_pem_start");
+extern const uint8_t server_root_cert_pem_end[]   asm("_binary_server_cert_pem_end");
 
 
 void mqtt_task(void *pvParameters)
@@ -46,6 +49,45 @@ void mqtt_task(void *pvParameters)
   xEventGroupWaitBits(EC_EventGroup, EC_EVENT_GOT_IP_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
 
   ESP_LOGI(TAG, "Connected to wifi\n");
+
+  mbedtls_ssl_context ssl;
+  mbedtls_x509_crt cacert;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_ssl_config conf;
+  mbedtls_entropy_context entropy;
+  mbedtls_net_context server_fd;
+
+
+  mbedtls_ssl_init(&ssl);
+  mbedtls_x509_crt_init(&cacert);
+  mbedtls_ctr_drbg_init(&ctr_drbg);
+  mbedtls_ssl_config_init(&conf);
+  mbedtls_entropy_init(&entropy);
+
+  ESP_LOGI(TAG, "Seeding the random number generator");
+  ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, NULL, 0);
+  if(ret != 0)
+  {
+      ESP_LOGE(TAG, "mbedtls_ctr_drbg_seed returned %d", ret);
+      abort();
+  }
+
+  ESP_LOGI(TAG, "Loading the CA root certificate...");
+  ret = mbedtls_x509_crt_parse(&cacert, server_root_cert_pem_start, server_root_cert_pem_end - server_root_cert_pem_start);
+  if(ret < 0)
+  {
+      ESP_LOGE(TAG, "mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
+      abort();
+  }
+
+  ESP_LOGI(TAG, "Setting hostname for TLS session...");
+  /* Hostname set here should match CN in server certificate */
+  // if((ret = mbedtls_ssl_set_hostname(&ssl, WEB_SERVER)) != 0)
+  {
+    // ESP_LOGE(TAG, "mbedtls_ssl_set_hostname returned -0x%x", -ret);
+    // abort();
+  }
+
 
   NetworkInit(&network);
 
