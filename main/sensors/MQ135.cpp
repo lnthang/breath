@@ -71,7 +71,16 @@ float MQ135::getCorrectionFactor(float t, float h) {
 /**************************************************************************/
 float MQ135::getResistance() {
   // int val = analogRead(_pin);
-  int val = adc1_get_voltage((adc1_channel_t)_pin);
+  int val = 0;
+
+  #define MAX_ADC_READ 10
+  int totalVal = 0;
+  for (int i = 0; i < MAX_ADC_READ; i++)
+  {
+    totalVal += adc1_get_voltage((adc1_channel_t)_pin);
+  }
+  val = totalVal / MAX_ADC_READ;
+
   return ((MAX_ADC/(float)val) * VCC - 1.)*RLOAD;
 }
 
@@ -84,7 +93,13 @@ float MQ135::getResistance() {
 /**************************************************************************/
 float MQ135::getRawADC() {
   // int val = analogRead(_pin);
-  int val = adc1_get_voltage((adc1_channel_t)_pin);
+  int val = 0, totalVal = 0;
+  for (int i = 0; i < MAX_ADC_READ; i++)
+  {
+    totalVal += adc1_get_voltage((adc1_channel_t)_pin);
+  }
+  val = totalVal / MAX_ADC_READ;
+
   return val;
 }
 
