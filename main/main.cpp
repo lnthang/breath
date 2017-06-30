@@ -37,7 +37,7 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-MQ135 gasSensorMQ135_0 = MQ135(ADC1_CHANNEL_0);
+MQ135 gasSensorMQ135_0 = MQ135(ADC1_CHANNEL_6);
 
 #define DHTPIN2            17         // Pin which is connected to the DHT sensor.
 #define DHTTYPE            DHT22     // DHT 22 (AM2302)
