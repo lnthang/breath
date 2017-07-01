@@ -28,7 +28,7 @@ v1.0 - First release
 /// The load resistance on the board
 #define RLOAD 1.0
 /// Calibration resistance at atmospheric CO2 level
-#define RZERO 52.1690//33.976285
+#define RZERO 15.7250//52.1690//33.976285
 /// Parameters for calculating ppm of CO2 from sensor resistance
 #define PARA 116.6020682
 #define PARB 2.769034857
@@ -52,8 +52,9 @@ v1.0 - First release
 /// Atmospheric CO2 level for calibration purposes
 #define ATMOCO2 409.01
 
-#define MAX_ADC 4095.0//1023.0
-#define VCC     3.3//5.0
+#define VMAX_ADC 3.3
+#define MAX_ADC_RESOLUTION 4095.0//1023.0
+#define VCC     5.0
 
 class MQ135 {
  private:

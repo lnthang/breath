@@ -73,6 +73,7 @@ void printDHT(DHT_Data data)
 typedef struct MQ135_data_t
 {
 	float rawADC;
+	float Rs;
 	float estPPM;
 	float estPPM_with_temp_hum;
 	
@@ -80,7 +81,7 @@ typedef struct MQ135_data_t
 
 void printMQ135(MQ135_Data data)
 {
-	printf("-- MQ135 %f %f %f\n", data.rawADC, data.estPPM, data.estPPM_with_temp_hum);
+	printf("-- MQ135 %f %f %f %f\n", data.rawADC, data.Rs, data.estPPM, data.estPPM_with_temp_hum);
 }
 
 DHT_Data DHT_data;
@@ -114,6 +115,7 @@ static bool readSensor(DHT_data_t* DHT_data, MQ135_data_t* MQ135_data)
 			&& DHT_data->temperature < 55.0f 
 			&& DHT_data->humidity > 0.0f)
 		{
+			MQ135_data->Rs = gasSensorMQ135_0.getCorrectedResistance(DHT_data->temperature, DHT_data->humidity);
 			MQ135_data->estPPM_with_temp_hum = gasSensorMQ135_0.getCorrectedPPM(DHT_data->temperature, DHT_data->humidity);
 			DHT_data->dewPoint  = dht2.computeDewPointInCelcius(DHT_data->temperature, DHT_data->humidity);
 			DHT_data->heatIndex = dht2.computeHeatIndex(DHT_data->temperature,  DHT_data->humidity, false);
@@ -162,9 +164,7 @@ const int CONNECTED_BIT = BIT0;
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER "api.thingspeak.com"
 #define WEB_PORT "443"
-#define WEB_URL "https://api.thingspeak.com/update?api_key=FG8XS7Q868L4MCYG"//GFW6TKN1F0G39LAO"//FG8XS7Q868L4MCYG
-
-#define WEB_DELETE "https://api.thingspeak.com/channels/290009/feeds" //294713
+#define WEB_URL "https://api.thingspeak.com/update?api_key=GFW6TKN1F0G39LAO"//GFW6TKN1F0G39LAO"//FG8XS7Q868L4MCYG
 
 static const char *TAG = "WIFI_HTTPS";
 
@@ -204,10 +204,10 @@ static void initialise_wifi(void)
     wifi_config_t wifi_config = 
     {
         .sta = {
-        	// "Ngoc Duc",
-        	// "08111989",
-            "Hong_quan",
-            "khongcocho",
+        	"Ngoc Duc",
+        	"08111989",
+            // "Hong_quan",
+            // "khongcocho",
 			false
         },
     };
@@ -370,12 +370,12 @@ static void https_get_task(void *pvParameters) {
 		{	
 			char reqbuf[512];
 
-			sprintf(reqbuf,"GET %s&field1=%f&field2=%f&field3=%f&field4=%f&field5=%f&field6=%f&field7=%f \
+			sprintf(reqbuf,"GET %s&field1=%f&field2=%f&field3=%f&field6=%f&field7=%f \
 							HTTP/1.1\n \
 							Host: %s\n \
 							User-Agent: esp-idf/1.0 esp32\n\n",
 								WEB_URL, DHT_data.temperature, DHT_data.humidity, 
-								MQ135_data.rawADC, MQ135_data.estPPM, MQ135_data.estPPM_with_temp_hum, 
+								// MQ135_data.rawADC, MQ135_data.estPPM, MQ135_data.estPPM_with_temp_hum, 
 								DHT_data.heatIndex, DHT_data.dewPoint, WEB_SERVER);
 
 			ESP_LOGI(TAG, "req=[%s]",reqbuf);
